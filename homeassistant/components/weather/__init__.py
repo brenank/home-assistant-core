@@ -896,7 +896,6 @@ class WeatherEntity(Entity):
                 if (forecast_humidity := forecast_entry.pop(ATTR_FORECAST_HUMIDITY, None)) is not None:
                     forecast_entry[ATTR_FORECAST_HUMIDITY] = round(forecast_humidity)
 
-
                 forecast.append(forecast_entry)
 
             data[ATTR_FORECAST] = forecast

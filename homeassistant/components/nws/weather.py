@@ -1,11 +1,17 @@
 """Support for NWS weather service."""
+from pynws.const import Detail
+
 from homeassistant.components.weather import (
     ATTR_CONDITION_CLEAR_NIGHT,
     ATTR_CONDITION_SUNNY,
     ATTR_FORECAST_CONDITION,
     ATTR_FORECAST_NATIVE_TEMP,
+    ATTR_FORECAST_NATIVE_TEMP_LOW,
     ATTR_FORECAST_NATIVE_WIND_SPEED,
     ATTR_FORECAST_PRECIPITATION_PROBABILITY,
+    ATTR_FORECAST_NATIVE_APPARENT_TEMP,
+    ATTR_FORECAST_NATIVE_DEWPOINT,
+    ATTR_FORECAST_HUMIDITY,
     ATTR_FORECAST_TIME,
     ATTR_FORECAST_WIND_BEARING,
     WeatherEntity,
@@ -35,9 +41,11 @@ from .const import (
     ATTRIBUTION,
     CONDITION_CLASSES,
     COORDINATOR_FORECAST,
+    COORDINATOR_FORECAST_DETAILED,
     COORDINATOR_FORECAST_HOURLY,
     COORDINATOR_OBSERVATION,
     DAYNIGHT,
+    DETAILED,
     DOMAIN,
     FORECAST_VALID_TIME,
     HOURLY,
@@ -86,6 +94,7 @@ async def async_setup_entry(
         [
             NWSWeather(entry.data, hass_data, DAYNIGHT, hass.config.units),
             NWSWeather(entry.data, hass_data, HOURLY, hass.config.units),
+            NWSWeather(entry.data, hass_data, DETAILED, hass.config.units),
         ],
         False,
     )
@@ -104,6 +113,8 @@ class NWSWeather(WeatherEntity):
             self.coordinator_forecast = hass_data[COORDINATOR_FORECAST]
         elif mode == HOURLY:
             self.coordinator_forecast = hass_data[COORDINATOR_FORECAST_HOURLY]
+        elif mode == DETAILED:
+            self.coordinator_forecast = hass_data[COORDINATOR_FORECAST_DETAILED]
         self.station = self.nws.station
 
         self.is_metric = units.is_metric
@@ -130,6 +141,8 @@ class NWSWeather(WeatherEntity):
             self._forecast = self.nws.forecast
         elif self.mode == HOURLY:
             self._forecast = self.nws.forecast_hourly
+        elif self.mode == DETAILED:
+            self._forecast = list(self.nws.detailed_forecast.get_details_by_hour(utcnow()))
 
         self.async_write_ha_state()
 
@@ -238,9 +251,13 @@ class NWSWeather(WeatherEntity):
             }
 
             if (temp := forecast_entry.get("temperature")) is not None:
-                data[ATTR_FORECAST_NATIVE_TEMP] = convert_temperature(
-                    temp, TEMP_FAHRENHEIT, TEMP_CELSIUS
-                )
+                if self.mode == DAYNIGHT or self.mode == HOURLY:
+                    # pynws converts raw nws data to F from daynight or hourly endpoints
+                    data[ATTR_FORECAST_NATIVE_TEMP] = convert_temperature(
+                        temp, TEMP_FAHRENHEIT, TEMP_CELSIUS
+                    )
+                elif self.mode == DETAILED:
+                    data[ATTR_FORECAST_NATIVE_TEMP] = temp
             else:
                 data[ATTR_FORECAST_NATIVE_TEMP] = None
 
@@ -263,6 +280,19 @@ class NWSWeather(WeatherEntity):
                 )
             else:
                 data[ATTR_FORECAST_NATIVE_WIND_SPEED] = None
+
+            if (temp_low := forecast_entry.get(Detail.MIN_TEMPERATURE)) is not None:
+                data[ATTR_FORECAST_NATIVE_TEMP_LOW] = temp_low
+
+            if (apparent_temp := forecast_entry.get(Detail.APPARENT_TEMPERATURE)) is not None:
+                data[ATTR_FORECAST_NATIVE_APPARENT_TEMP] = apparent_temp
+
+            if (dewpoint := forecast_entry.get(Detail.DEWPOINT)) is not None:
+                data[ATTR_FORECAST_NATIVE_DEWPOINT] = dewpoint
+
+            if (humidity := forecast_entry.get(Detail.RELATIVE_HUMIDITY)) is not None:
+                data[ATTR_FORECAST_HUMIDITY] = humidity
+
             forecast.append(data)
         return forecast
 

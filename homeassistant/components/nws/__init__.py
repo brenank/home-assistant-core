@@ -23,6 +23,7 @@ from .const import (
     CONF_STATION,
     COORDINATOR_FORECAST,
     COORDINATOR_FORECAST_HOURLY,
+    COORDINATOR_FORECAST_DETAILED,
     COORDINATOR_OBSERVATION,
     DOMAIN,
     NWS_DATA,
@@ -146,18 +147,33 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             hass, _LOGGER, cooldown=DEBOUNCE_TIME, immediate=True
         ),
     )
+
+    coordinator_forecast_detailed = NwsDataUpdateCoordinator(
+        hass,
+        _LOGGER,
+        name=f"NWS detailed forecast station {station}",
+        update_method=nws_data.update_detailed_forecast,
+        update_interval=DEFAULT_SCAN_INTERVAL,
+        failed_update_interval=FAILED_SCAN_INTERVAL,
+        request_refresh_debouncer=debounce.Debouncer(
+            hass, _LOGGER, cooldown=DEBOUNCE_TIME, immediate=True
+        ),
+    )
+
     nws_hass_data = hass.data.setdefault(DOMAIN, {})
     nws_hass_data[entry.entry_id] = {
         NWS_DATA: nws_data,
         COORDINATOR_OBSERVATION: coordinator_observation,
         COORDINATOR_FORECAST: coordinator_forecast,
         COORDINATOR_FORECAST_HOURLY: coordinator_forecast_hourly,
+        COORDINATOR_FORECAST_DETAILED: coordinator_forecast_detailed,
     }
 
     # Fetch initial data so we have data when entities subscribe
     await coordinator_observation.async_refresh()
     await coordinator_forecast.async_refresh()
     await coordinator_forecast_hourly.async_refresh()
+    await coordinator_forecast_detailed.async_refresh()
 
     hass.config_entries.async_setup_platforms(entry, PLATFORMS)
 
