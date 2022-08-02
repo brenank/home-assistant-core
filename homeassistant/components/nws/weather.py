@@ -102,7 +102,7 @@ class NWSWeather(WeatherEntity):
         self.coordinator_observation = hass_data[COORDINATOR_OBSERVATION]
         if mode == DAYNIGHT:
             self.coordinator_forecast = hass_data[COORDINATOR_FORECAST]
-        else:
+        elif mode == HOURLY:
             self.coordinator_forecast = hass_data[COORDINATOR_FORECAST_HOURLY]
         self.station = self.nws.station
 
@@ -128,7 +128,7 @@ class NWSWeather(WeatherEntity):
         self.observation = self.nws.observation
         if self.mode == DAYNIGHT:
             self._forecast = self.nws.forecast
-        else:
+        elif self.mode == HOURLY:
             self._forecast = self.nws.forecast_hourly
 
         self.async_write_ha_state()
