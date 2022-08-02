@@ -1,9 +1,9 @@
 """Fixtures for National Weather Service tests."""
-from unittest.mock import AsyncMock, patch
+from unittest.mock import Mock, AsyncMock, patch
 
 import pytest
 
-from tests.components.nws.const import DEFAULT_FORECAST, DEFAULT_OBSERVATION
+from tests.components.nws.const import DEFAULT_FORECAST, DEFAULT_DETAILED_FORECAST, DEFAULT_OBSERVATION
 
 
 @pytest.fixture()
@@ -15,11 +15,13 @@ def mock_simple_nws():
         instance.update_observation = AsyncMock(return_value=None)
         instance.update_forecast = AsyncMock(return_value=None)
         instance.update_forecast_hourly = AsyncMock(return_value=None)
+        instance.update_detailed_forecast = AsyncMock(return_value=None)
         instance.station = "ABC"
         instance.stations = ["ABC"]
         instance.observation = DEFAULT_OBSERVATION
         instance.forecast = DEFAULT_FORECAST
         instance.forecast_hourly = DEFAULT_FORECAST
+        instance.detailed_forecast.get_details_by_hour = Mock(return_value=DEFAULT_DETAILED_FORECAST)
         yield mock_nws
 
 
