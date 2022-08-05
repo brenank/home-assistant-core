@@ -91,11 +91,13 @@ CONDITION_CLASSES = {
 
 DAYNIGHT = "daynight"
 HOURLY = "hourly"
+DETAILED = "detailed"
 
 NWS_DATA = "nws data"
 COORDINATOR_OBSERVATION = "coordinator_observation"
 COORDINATOR_FORECAST = "coordinator_forecast"
 COORDINATOR_FORECAST_HOURLY = "coordinator_forecast_hourly"
+COORDINATOR_FORECAST_DETAILED = "coordinator_forecast_detailed"
 
 OBSERVATION_VALID_TIME = timedelta(minutes=20)
 FORECAST_VALID_TIME = timedelta(minutes=45)

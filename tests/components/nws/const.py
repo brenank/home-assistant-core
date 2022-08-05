@@ -1,13 +1,19 @@
 """Helpers for interacting with pynws."""
+from pynws import DetailedForecast
+
 from homeassistant.components.nws.const import CONF_STATION
 from homeassistant.components.weather import (
     ATTR_CONDITION_LIGHTNING_RAINY,
     ATTR_FORECAST_CONDITION,
     ATTR_FORECAST_PRECIPITATION_PROBABILITY,
     ATTR_FORECAST_TEMP,
+    ATTR_FORECAST_TEMP_LOW,
     ATTR_FORECAST_TIME,
     ATTR_FORECAST_WIND_BEARING,
     ATTR_FORECAST_WIND_SPEED,
+    ATTR_FORECAST_APPARENT_TEMP,
+    ATTR_FORECAST_DEWPOINT,
+    ATTR_FORECAST_HUMIDITY,
     ATTR_WEATHER_HUMIDITY,
     ATTR_WEATHER_PRESSURE,
     ATTR_WEATHER_TEMPERATURE,
@@ -145,6 +151,71 @@ DEFAULT_FORECAST = [
     },
 ]
 
+DEFAULT_DETAILED_FORECAST = [
+    {
+        "startTime": '2022-08-01T22:00:00',
+        "endTime": '2022-08-01T23:00:00',
+        "temperature": 21.44444444444444,
+        "dewpoint": 15.55555555555555,
+        "maxTemperature": None,
+        "minTemperature": 18.33333333333333,
+        "relativeHumidity": 70,
+        "apparentTemperature": 31.11111111111111,
+        "heatIndex": 32.22222222222222,
+        "windChill": None,
+        "skyCover": 15,
+        "windDirection": 50,
+        "windSpeed": 5.556,
+        "windGust": 7.408,
+        "weather": [{'coverage': None, 'weather': None, 'intensity': None,
+                     'visibility': {'unitCode': 'wmoUnit:km', 'value': None}, 'attributes': []}],
+        "hazards": [],
+        "probabilityOfPrecipitation": 0,
+        "quantitativePrecipitation": 0,
+        "iceAccumulation": None,
+        "snowfallAmount": 0,
+        "snowLevel": 3628.3392,
+        "ceilingHeight": None,
+        "visibility": None,
+        "transportWindSpeed": 3.704,
+        "transportWindDirection": 210,
+        "mixingHeight": 690.0672,
+        "hainesIndex": 4,
+        "lightningActivityLevel": 1,
+        "twentyFootWindSpeed": 5.556,
+        "twentyFootWindDirection": 50,
+        "waveHeight": 0,
+        "wavePeriod": 0,
+        "waveDirection": None,
+        "primarySwellHeight": 0,
+        "primarySwellDirection": 0,
+        "secondarySwellHeight": 0,
+        "secondarySwellDirection": 0,
+        "wavePeriod2": 0,
+        "windWaveHeight": 0,
+        "dispersionIndex": None,
+        "pressure": None,
+        "probabilityOfTropicalStormWinds": None,
+        "probabilityOfHurricaneWinds": None,
+        "potentialOf15mphWinds": None,
+        "potentialOf25mphWinds": None,
+        "potentialOf35mphWinds": None,
+        "potentialOf45mphWinds": None,
+        "potentialOf20mphWindGusts": None,
+        "potentialOf30mphWindGusts": None,
+        "potentialOf40mphWindGusts": None,
+        "potentialOf50mphWindGusts": None,
+        "potentialOf60mphWindGusts": None,
+        "grasslandFireDangerIndex": None,
+        "probabilityOfThunder": None,
+        "davisStabilityIndex": None,
+        "atmosphericDispersionIndex": None,
+        "lowVisibilityOccurrenceRiskIndex": None,
+        "stability": None,
+        "redFlagThreatIndex": None
+    }
+]
+
 EXPECTED_FORECAST_IMPERIAL = {
     ATTR_FORECAST_CONDITION: ATTR_CONDITION_LIGHTNING_RAINY,
     ATTR_FORECAST_TIME: "2019-08-12T20:00:00-04:00",
@@ -152,6 +223,18 @@ EXPECTED_FORECAST_IMPERIAL = {
     ATTR_FORECAST_WIND_SPEED: 10,
     ATTR_FORECAST_WIND_BEARING: 180,
     ATTR_FORECAST_PRECIPITATION_PROBABILITY: 90,
+}
+
+EXPECTED_FORECAST_DETAILED_IMPERIAL = {
+    ATTR_FORECAST_TIME: "2022-08-01T22:00:00",
+    ATTR_FORECAST_TEMP: 71,
+    ATTR_FORECAST_TEMP_LOW: 65,
+    ATTR_FORECAST_WIND_SPEED: None,
+    ATTR_FORECAST_WIND_BEARING: None,
+    ATTR_FORECAST_PRECIPITATION_PROBABILITY: None,
+    ATTR_FORECAST_APPARENT_TEMP: 88.0,
+    ATTR_FORECAST_DEWPOINT: 60.0,
+    ATTR_FORECAST_HUMIDITY: 70,
 }
 
 EXPECTED_FORECAST_METRIC = {
@@ -165,6 +248,18 @@ EXPECTED_FORECAST_METRIC = {
     ),
     ATTR_FORECAST_WIND_BEARING: 180,
     ATTR_FORECAST_PRECIPITATION_PROBABILITY: 90,
+}
+
+EXPECTED_FORECAST_DETAILED_METRIC = {
+    ATTR_FORECAST_TIME: "2022-08-01T22:00:00",
+    ATTR_FORECAST_TEMP: 21.4,
+    ATTR_FORECAST_TEMP_LOW: 18.3,
+    ATTR_FORECAST_WIND_SPEED: None,
+    ATTR_FORECAST_WIND_BEARING: None,
+    ATTR_FORECAST_PRECIPITATION_PROBABILITY: None,
+    ATTR_FORECAST_APPARENT_TEMP: 31.1,
+    ATTR_FORECAST_DEWPOINT: 15.6,
+    ATTR_FORECAST_HUMIDITY: 70,
 }
 
 NONE_FORECAST = [{key: None for key in DEFAULT_FORECAST[0]}]

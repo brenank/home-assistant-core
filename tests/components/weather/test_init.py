@@ -11,8 +11,13 @@ from homeassistant.components.weather import (
     ATTR_FORECAST_PRESSURE,
     ATTR_FORECAST_TEMP,
     ATTR_FORECAST_TEMP_LOW,
+    ATTR_FORECAST_APPARENT_TEMP,
+    ATTR_FORECAST_DEWPOINT,
+    ATTR_FORECAST_HUMIDITY,
     ATTR_FORECAST_WIND_BEARING,
     ATTR_FORECAST_WIND_SPEED,
+    ATTR_WEATHER_APPARENT_TEMP,
+    ATTR_WEATHER_DEWPOINT,
     ATTR_WEATHER_OZONE,
     ATTR_WEATHER_PRECIPITATION_UNIT,
     ATTR_WEATHER_PRESSURE,
@@ -492,9 +497,35 @@ async def test_none_forecast(
     state = hass.states.get(entity0.entity_id)
     forecast = state.attributes[ATTR_FORECAST][0]
 
+    assert forecast.get(ATTR_FORECAST_TEMP) is None
+    assert forecast.get(ATTR_FORECAST_TEMP_LOW) is None
     assert forecast.get(ATTR_FORECAST_PRESSURE) is None
     assert forecast.get(ATTR_FORECAST_WIND_SPEED) is None
+    assert forecast.get(ATTR_FORECAST_WIND_BEARING) is None
     assert forecast.get(ATTR_FORECAST_PRECIPITATION) is None
+    assert forecast.get(ATTR_FORECAST_TEMP) is None
+    assert forecast.get(ATTR_FORECAST_TEMP_LOW) is None
+    assert forecast.get(ATTR_FORECAST_APPARENT_TEMP) is None
+    assert forecast.get(ATTR_FORECAST_DEWPOINT) is None
+    assert forecast.get(ATTR_FORECAST_HUMIDITY) is None
+
+async def test_forecast(
+    hass: HomeAssistant,
+    enable_custom_integrations,
+):
+    """Test unconverted forecast values."""
+    humidity_value = 62
+
+    entity0 = await create_entity(
+        hass,
+        forecast=[Forecast(
+            humidity=humidity_value
+        )],
+    )
+
+    state = hass.states.get(entity0.entity_id)
+    forecast = state.attributes[ATTR_FORECAST][0]
+    assert float(forecast[ATTR_FORECAST_HUMIDITY]) == humidity_value
 
 
 async def test_custom_units(hass: HomeAssistant, enable_custom_integrations) -> None:
@@ -504,6 +535,9 @@ async def test_custom_units(hass: HomeAssistant, enable_custom_integrations) -> 
     pressure_value = 110
     pressure_unit = PRESSURE_HPA
     temperature_value = 20
+    temperature_low_value = 15
+    apparent_temp_value = 25
+    dewpoint_value = 10
     temperature_unit = TEMP_CELSIUS
     visibility_value = 11
     visibility_unit = LENGTH_KILOMETERS
@@ -531,6 +565,8 @@ async def test_custom_units(hass: HomeAssistant, enable_custom_integrations) -> 
             name="Test",
             condition=ATTR_CONDITION_SUNNY,
             native_temperature=temperature_value,
+            native_apparent_temp=apparent_temp_value,
+            native_dewpoint=dewpoint_value,
             native_temperature_unit=temperature_unit,
             native_wind_speed=wind_speed_value,
             native_wind_speed_unit=wind_speed_unit,
@@ -540,6 +576,16 @@ async def test_custom_units(hass: HomeAssistant, enable_custom_integrations) -> 
             native_visibility_unit=visibility_unit,
             native_precipitation=precipitation_value,
             native_precipitation_unit=precipitation_unit,
+            forecast=[platform.Forecast(
+                condition=ATTR_CONDITION_SUNNY,
+                native_temperature=temperature_value,
+                native_templow=temperature_low_value,
+                native_wind_speed=wind_speed_value,
+                native_pressure=pressure_value,
+                native_precipitation=precipitation_value,
+                native_apparent_temp=apparent_temp_value,
+                native_dewpoint=dewpoint_value,
+            )],
             unique_id="very_unique",
         )
     )
@@ -560,6 +606,15 @@ async def test_custom_units(hass: HomeAssistant, enable_custom_integrations) -> 
     expected_temperature = convert_temperature(
         temperature_value, temperature_unit, TEMP_FAHRENHEIT
     )
+    expected_temperature_low = convert_temperature(
+        temperature_low_value, temperature_unit, TEMP_FAHRENHEIT
+    )
+    expected_apparent_temp = convert_temperature(
+        apparent_temp_value, temperature_unit, TEMP_FAHRENHEIT
+    )
+    expected_dewpoint = convert_temperature(
+        dewpoint_value, temperature_unit, TEMP_FAHRENHEIT
+    )
     expected_pressure = round(
         convert_pressure(pressure_value, pressure_unit, PRESSURE_INHG),
         ROUNDING_PRECISION,
@@ -579,9 +634,28 @@ async def test_custom_units(hass: HomeAssistant, enable_custom_integrations) -> 
     assert float(state.attributes[ATTR_WEATHER_TEMPERATURE]) == approx(
         expected_temperature, rel=0.1
     )
+    assert float(state.attributes[ATTR_WEATHER_APPARENT_TEMP]) == approx(
+        expected_apparent_temp, rel=0.1
+    )
+    assert float(state.attributes[ATTR_WEATHER_DEWPOINT]) == approx(
+        expected_dewpoint, rel=0.1
+    )
     assert float(state.attributes[ATTR_WEATHER_PRESSURE]) == approx(expected_pressure)
     assert float(state.attributes[ATTR_WEATHER_VISIBILITY]) == approx(
         expected_visibility
+    )
+
+    assert float(forecast[ATTR_FORECAST_TEMP]) == approx(
+        expected_temperature, rel=1e-2
+    )
+    assert float(forecast[ATTR_FORECAST_TEMP_LOW]) == approx(
+        expected_temperature_low, rel=1e-2
+    )
+    assert float(forecast[ATTR_FORECAST_APPARENT_TEMP]) == approx(
+        expected_apparent_temp, rel=0.1
+    )
+    assert float(forecast[ATTR_FORECAST_DEWPOINT]) == approx(
+        expected_dewpoint, rel=0.1
     )
     assert float(forecast[ATTR_FORECAST_PRECIPITATION]) == approx(
         expected_precipitation, rel=1e-2

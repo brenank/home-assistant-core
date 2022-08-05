@@ -21,6 +21,8 @@ from tests.common import MockConfigEntry, async_fire_time_changed
 from tests.components.nws.const import (
     EXPECTED_FORECAST_IMPERIAL,
     EXPECTED_FORECAST_METRIC,
+    EXPECTED_FORECAST_DETAILED_IMPERIAL,
+    EXPECTED_FORECAST_DETAILED_METRIC,
     NONE_FORECAST,
     NONE_OBSERVATION,
     NWS_CONFIG,
@@ -77,6 +79,53 @@ async def test_imperial_metric(
         assert forecast[0].get(key) == value
 
     state = hass.states.get("weather.abc_daynight")
+
+    assert state
+    assert state.state == ATTR_CONDITION_SUNNY
+
+    data = state.attributes
+    for key, value in result_observation.items():
+        assert data.get(key) == value
+
+    forecast = data.get(ATTR_FORECAST)
+    for key, value in result_forecast.items():
+        assert forecast[0].get(key) == value
+
+@pytest.mark.parametrize(
+    "units,result_observation,result_forecast",
+    [
+        (
+            IMPERIAL_SYSTEM,
+            WEATHER_EXPECTED_OBSERVATION_IMPERIAL,
+            EXPECTED_FORECAST_DETAILED_IMPERIAL,
+        ),
+        (METRIC_SYSTEM, WEATHER_EXPECTED_OBSERVATION_METRIC, EXPECTED_FORECAST_DETAILED_METRIC),
+    ],
+)
+async def test_imperial_metric_weather_detailed(
+    hass, units, result_observation, result_forecast, mock_simple_nws, no_sensor
+):
+    """Test with imperial and metric units."""
+    # enable the detailed entity
+    registry = er.async_get(hass)
+    registry.async_get_or_create(
+        WEATHER_DOMAIN,
+        nws.DOMAIN,
+        "35_-75_detailed",
+        suggested_object_id="abc_detailed",
+        disabled_by=None,
+    )
+
+    hass.config.units = units
+    entry = MockConfigEntry(
+        domain=nws.DOMAIN,
+        data=NWS_CONFIG,
+    )
+    entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    state = hass.states.get("weather.abc_detailed")
 
     assert state
     assert state.state == ATTR_CONDITION_SUNNY
@@ -157,6 +206,7 @@ async def test_error_station(hass, mock_simple_nws, no_sensor):
 
     assert hass.states.get("weather.abc_hourly") is None
     assert hass.states.get("weather.abc_daynight") is None
+    assert hass.states.get("weather.abc_detailed") is None
 
 
 async def test_entity_refresh(hass, mock_simple_nws, no_sensor):
@@ -175,6 +225,7 @@ async def test_entity_refresh(hass, mock_simple_nws, no_sensor):
     instance.update_observation.assert_called_once()
     instance.update_forecast.assert_called_once()
     instance.update_forecast_hourly.assert_called_once()
+    instance.update_detailed_forecast.assert_called_once()
 
     await hass.services.async_call(
         "homeassistant",
@@ -186,6 +237,7 @@ async def test_entity_refresh(hass, mock_simple_nws, no_sensor):
     assert instance.update_observation.call_count == 2
     assert instance.update_forecast.call_count == 2
     instance.update_forecast_hourly.assert_called_once()
+    instance.update_detailed_forecast.assert_called_once()
 
 
 async def test_error_observation(hass, mock_simple_nws, no_sensor):
@@ -323,6 +375,46 @@ async def test_error_forecast_hourly(hass, mock_simple_nws, no_sensor):
     assert state
     assert state.state == ATTR_CONDITION_SUNNY
 
+async def test_error_forecast_detailed(hass, mock_simple_nws, no_sensor):
+    """Test error during update forecast detailed."""
+    instance = mock_simple_nws.return_value
+    instance.update_detailed_forecast.side_effect = aiohttp.ClientError
+
+    # enable the hourly entity
+    registry = er.async_get(hass)
+    registry.async_get_or_create(
+        WEATHER_DOMAIN,
+        nws.DOMAIN,
+        "35_-75_detailed",
+        suggested_object_id="abc_detailed",
+        disabled_by=None,
+    )
+
+    entry = MockConfigEntry(
+        domain=nws.DOMAIN,
+        data=NWS_CONFIG,
+    )
+    entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    state = hass.states.get("weather.abc_detailed")
+    assert state
+    assert state.state == STATE_UNAVAILABLE
+
+    instance.update_detailed_forecast.assert_called_once()
+
+    instance.update_detailed_forecast.side_effect = None
+
+    async_fire_time_changed(hass, dt_util.utcnow() + timedelta(minutes=1))
+    await hass.async_block_till_done()
+
+    assert instance.update_detailed_forecast.call_count == 2
+
+    state = hass.states.get("weather.abc_detailed")
+    assert state
+    assert state.state == ATTR_CONDITION_SUNNY
+
 
 async def test_forecast_hourly_disable_enable(hass, mock_simple_nws, no_sensor):
     """Test error during update forecast hourly."""
@@ -340,6 +432,32 @@ async def test_forecast_hourly_disable_enable(hass, mock_simple_nws, no_sensor):
         WEATHER_DOMAIN,
         nws.DOMAIN,
         "35_-75_hourly",
+    )
+    assert entry.disabled is True
+
+    # Test enabling entity
+    updated_entry = registry.async_update_entity(
+        entry.entity_id, **{"disabled_by": None}
+    )
+    assert updated_entry != entry
+    assert updated_entry.disabled is False
+
+async def test_forecast_hourly_disable_enable(hass, mock_simple_nws, no_sensor):
+    """Test error during update forecast detailed."""
+    entry = MockConfigEntry(
+        domain=nws.DOMAIN,
+        data=NWS_CONFIG,
+    )
+    entry.add_to_hass(hass)
+
+    await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    registry = er.async_get(hass)
+    entry = registry.async_get_or_create(
+        WEATHER_DOMAIN,
+        nws.DOMAIN,
+        "35_-75_detailed",
     )
     assert entry.disabled is True
 
