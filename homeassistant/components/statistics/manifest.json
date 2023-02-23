@@ -2,6 +2,7 @@
   "domain": "statistics",
   "name": "Statistics",
   "documentation": "https://www.home-assistant.io/integrations/statistics",
+  "version": "0.0.1",
   "after_dependencies": ["recorder"],
   "codeowners": ["@fabaff", "@ThomDietrich"],
   "quality_scale": "internal",
