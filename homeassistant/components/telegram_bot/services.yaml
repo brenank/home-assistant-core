@@ -616,6 +616,102 @@ send_document:
       selector:
         text:
 
+send_mediagroup:
+  name: Send media group
+  description: Send a group of photos, videos, documents or audios as an album.
+    Documents and audio files can be only grouped in an album with messages of the same type.
+  fields:
+    url:
+      name: URL
+      description: Remote path to media file.
+      example: "http://example.org/path/to/the/document.odf"
+      selector:
+        text:
+    file:
+      name: File
+      description: Local path to a media file.
+      example: "/tmp/whatever.odf"
+      selector:
+        text:
+    caption:
+      name: Caption
+      description: The title of the media file.
+      example: Media Title xy
+      selector:
+        text:
+    username:
+      name: Username
+      description: Username for a URL which require HTTP authentication.
+      example: myuser
+      selector:
+        text:
+    password:
+      name: Password
+      description: Password (or bearer token) for a URL which require HTTP authentication.
+      example: myuser_pwd
+      selector:
+        text:
+    authentication:
+      name: Authentication method
+      description: Define which authentication method to use. Set to `digest` to use HTTP digest authentication, or `bearer_token` for OAuth 2.0 bearer token authentication. Defaults to `basic`.
+      default: digest
+      selector:
+        select:
+          options:
+            - "digest"
+            - "bearer_token"
+    target:
+      name: Target
+      description: An array of pre-authorized chat_ids to send the document to. If not present, first allowed chat_id is the default.
+      example: "[12345, 67890] or 12345"
+      selector:
+        object:
+    parse_mode:
+      name: Parse mode
+      description: "Parser for the message text."
+      selector:
+        select:
+          options:
+            - "html"
+            - "markdown"
+            - "markdown2"
+    disable_notification:
+      name: Disable notification
+      description: Sends the message silently. iOS users and Web users will not receive a notification, Android users will receive a notification with no sound.
+      selector:
+        boolean:
+    verify_ssl:
+      name: Verify SSL
+      description: Enable or disable SSL certificate verification. Set to false if you're downloading the file from a URL and you don't want to validate the SSL certificate of the server.
+      selector:
+        boolean:
+    timeout:
+      name: Timeout
+      description: Timeout for send document. Will help with timeout errors (poor internet connection, etc)
+      selector:
+        number:
+          min: 1
+          max: 3600
+          unit_of_measurement: seconds
+    keyboard:
+      name: Keyboard
+      description: List of rows of commands, comma-separated, to make a custom keyboard.
+      example: '["/command1, /command2", "/command3"]'
+      selector:
+        object:
+    inline_keyboard:
+      name: Inline keyboard
+      description: List of rows of commands, comma-separated, to make a custom inline keyboard with buttons with associated callback data.
+      example: '["/button1, /button2", "/button3"] or [[["Text button1", "/button1"], ["Text button2", "/button2"]], [["Text button3", "/button3"]]]'
+      selector:
+        object:
+    message_tag:
+      name: Message tag
+      description: "Tag for sent message. In telegram_sent event data: {{trigger.event.data.message_tag}}"
+      example: "msg_to_edit"
+      selector:
+        text:
+
 send_location:
   name: Send location
   description: Send a location.

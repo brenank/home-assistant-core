@@ -35,6 +35,7 @@ ATTR_PHOTO = "photo"
 ATTR_VIDEO = "video"
 ATTR_VOICE = "voice"
 ATTR_DOCUMENT = "document"
+ATTR_MEDIAGROUP = "mediagroup"
 
 CONF_CHAT_ID = "chat_id"
 
@@ -132,6 +133,15 @@ class TelegramNotificationService(BaseNotificationService):
             return self.hass.services.call(
                 DOMAIN, "send_document", service_data=service_data
             )
+        if data is not None and ATTR_MEDIAGROUP in data:
+            media_data = data.get(ATTR_MEDIAGROUP)
+            media_data = media_data if isinstance(media_data, list) else [media_data]
+            for media in media_data:
+                service_data.update(media)
+                self.hass.services.call(
+                    DOMAIN, "send_mediagroup", service_data=service_data
+                )
+            return
 
         # Send message
         _LOGGER.debug(
