@@ -103,6 +103,7 @@ SERVICE_SEND_VIDEO = "send_video"
 SERVICE_SEND_VOICE = "send_voice"
 SERVICE_SEND_DOCUMENT = "send_document"
 SERVICE_SEND_LOCATION = "send_location"
+SERVICE_SEND_MEDIAGROUP = "send_mediagroup"
 SERVICE_SEND_POLL = "send_poll"
 SERVICE_EDIT_MESSAGE = "edit_message"
 SERVICE_EDIT_CAPTION = "edit_caption"
@@ -266,6 +267,7 @@ SERVICE_MAP = {
     SERVICE_SEND_VIDEO: SERVICE_SCHEMA_SEND_FILE,
     SERVICE_SEND_VOICE: SERVICE_SCHEMA_SEND_FILE,
     SERVICE_SEND_DOCUMENT: SERVICE_SCHEMA_SEND_FILE,
+    SERVICE_SEND_MEDIAGROUP: SERVICE_SCHEMA_SEND_FILE,
     SERVICE_SEND_LOCATION: SERVICE_SCHEMA_SEND_LOCATION,
     SERVICE_SEND_POLL: SERVICE_SCHEMA_SEND_POLL,
     SERVICE_EDIT_MESSAGE: SERVICE_SCHEMA_EDIT_MESSAGE,
@@ -409,6 +411,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             SERVICE_SEND_VIDEO,
             SERVICE_SEND_VOICE,
             SERVICE_SEND_DOCUMENT,
+            SERVICE_SEND_MEDIAGROUP,
         ]:
             await hass.async_add_executor_job(
                 partial(notify_service.send_file, msgtype, **kwargs)
@@ -823,6 +826,19 @@ class TelegramNotificationService:
                         params[ATTR_MESSAGE_TAG],
                         chat_id=chat_id,
                         animation=file_content,
+                        caption=kwargs.get(ATTR_CAPTION),
+                        disable_notification=params[ATTR_DISABLE_NOTIF],
+                        reply_markup=params[ATTR_REPLYMARKUP],
+                        timeout=params[ATTR_TIMEOUT],
+                        parse_mode=params[ATTR_PARSER],
+                    )
+                elif file_type == SERVICE_SEND_MEDIAGROUP:
+                    self._send_msg(
+                        self.bot.send_media_group,
+                        "Error sending media group",
+                        params[ATTR_MESSAGE_TAG],
+                        chat_id=chat_id,
+                        media=file_content,
                         caption=kwargs.get(ATTR_CAPTION),
                         disable_notification=params[ATTR_DISABLE_NOTIF],
                         reply_markup=params[ATTR_REPLYMARKUP],
